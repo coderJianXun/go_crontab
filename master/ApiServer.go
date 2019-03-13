@@ -27,6 +27,7 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 		postJob string
 		job     common.Job
 		oldJob  *common.Job
+		bytes   []byte
 	)
 	// 解析POST表单
 	if err = req.ParseForm(); err != nil {
@@ -46,8 +47,20 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 		goto ERR
 	}
 
+	// 返回正常应答
+	if bytes, err = common.BuildResponse(0, "success", oldJob); err == nil {
+		resp.Write(bytes)
+	}
+	return
 ERR:
+
+	// 返回异常应答
+	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+		resp.Write(bytes)
+	}
 }
+
+func handleJobDelete(resp http.ResponseWriter, req *http.Request) {}
 
 func InitApiServer() (err error) {
 	var (
@@ -59,6 +72,7 @@ func InitApiServer() (err error) {
 	// 配置路由
 	mux = http.NewServeMux()
 	mux.HandleFunc("/job/save", handleJobSave)
+	mux.HandleFunc("/job/delete", handleJobDelete)
 
 	// 启动TCP监听
 	if listener, err = net.Listen("tcp", ":"+strconv.Itoa(G_config.ApiPort)); err != nil {
